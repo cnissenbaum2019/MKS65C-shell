@@ -31,8 +31,18 @@ char ** parse_args(char * line);
 //returns 0 - always
 void newline_remover(char * line);
 
+//takes an input for the desired path
+//changes the directory to said path
+//returns no value
+void cd(char * path)
+
 //Begins the shell and awaits instruction from user
 //to put into the shell command
 //returns 0 - always
 int shell(char * input);
+
+//Begins the shell and awaits instruction from user
+//to put into the shell command
+//returns 0 - always
+int main();
 ```
