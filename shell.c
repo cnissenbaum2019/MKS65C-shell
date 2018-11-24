@@ -1,6 +1,7 @@
 #include "shell.h"
 
 int wait_for_me;
+char * path;
 
 //prints garfield (sorry)
 void garf() {
@@ -34,6 +35,15 @@ void newline_remover(char * line) {
        line[newline] = '\0';
 }
 
+//takes an input for the desired path
+//changes the directory to said path
+//returns no value
+void cd(char * path) {
+	if (chdir(path) == -1) {
+		printf("Error: %s\n", strerror(errno));
+	}
+}
+
 
 //Takes the input as lines of commands (that have 
 //already been parsed by ';') and runs said commands
@@ -43,21 +53,27 @@ int shell (char * input) {
 	//remove that pesky newline, should it exist
 	newline_remover(input);
 
+	//sets p to an array of tokens from the input
+	char ** p = parse_args(input);
+
 	//when "exit" is typed, end this process
- 	if(strcmp(input, "exit") == 0) {exit(0);}
+ 	if(strcmp(p[0], "exit") == 0) {exit(0);}
 
  	//for fun
- 	if(strcmp(input, "garf") == 0) {
+ 	if(strcmp(p[0], "garf") == 0) {
  		garf();
  		return 0;
  	}
 
- 	//when "cd" is typed, change to input directory
- 
+ 	//changes the directory to the given pathname
+ 	if (strcmp(p[0], "cd") == 0) {
+    		cd(p[1]);
+    		return 0;
+    }
 
  	if (!fork()) {
  		wait_for_me = getpid();
-    	char ** p = parse_args(input);
+
 		if (execvp(p[0], p) == -1) {
 			printf("Error: %s\n", strerror(errno));
 			exit(1);
@@ -74,14 +90,18 @@ int shell (char * input) {
 //returns 0 - always
 int main() {
 
+	//intro to the shell
 	printf("Welcome to Garf:\n");
-
 	garf();
 
+	//buffer fro the current directory name
+	path = malloc(sizeof(char) * PATH_SIZE);
 
 	while(1) {
 
-		printf(">>");
+		//keeps track of the current directory
+		getcwd(path, sizeof(char) * PATH_SIZE);
+		printf("GARF::%s>>", path);
 
 		//create a buffer for the incoming set of commands
 		char * buff = malloc(sizeof(char) * BUFF_SIZE);
@@ -102,6 +122,8 @@ int main() {
 		free(free_this);
 
 	}
+
+	free(path);
 
 	return 0;		
 }

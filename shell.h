@@ -9,6 +9,7 @@
 #define BUFF_SIZE   100
 #define TOKEN_LIMIT  10
 #define GARF_SIZE   330
+#define PATH_SIZE   200
 
 //prints garfield (sorry)
 void garf();
@@ -26,3 +27,8 @@ void newline_remover(char * line);
 //to put into the shell command
 //returns 0 - always
 int shell(char * input);
+
+//Begins the shell and awaits instruction from user
+//to put into the shell command
+//returns 0 - always
+int main();
