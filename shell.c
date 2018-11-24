@@ -69,7 +69,9 @@ int shell (char * input) {
 	return 0;
 }
 
-
+//Begins the shell and awaits instruction from user
+//to put into the shell command
+//returns 0 - always
 int main() {
 
 	printf("Welcome to Garf:\n");
