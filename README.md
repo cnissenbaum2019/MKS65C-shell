@@ -18,7 +18,7 @@ Bugs:
 
 Function Headers:
 -
-
+```
 //prints garfield (sorry)
 void garf();
 
@@ -35,3 +35,4 @@ void newline_remover(char * line);
 //to put into the shell command
 //returns 0 - always
 int shell(char * input);
+```
