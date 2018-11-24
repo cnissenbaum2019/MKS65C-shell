@@ -6,11 +6,13 @@ Features that Work:
 - Exit
 - Commands
 - Semicolon separation
+- cd
 - garf
 
 Features that I plan to implement:
 -
-- cd
+- Tab completion
+- Up and Down arrow command recognition
 
 Bugs:
 -
