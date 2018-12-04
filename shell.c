@@ -1,10 +1,6 @@
 #include "shell.h"
 
 
-int wait_for_me;
-char * path;
-char * user;
-
 //prints garfield (sorry)
 void garf() {
 	int fd = open("garf", O_RDONLY);
@@ -33,7 +29,7 @@ char * strip_spaces(char * string) {
 //tokens separated by " " from the original string
 char ** parse_args(char * line) {
 	line = strip_spaces(line);
-    char ** parsed_args = calloc(5, sizeof(char **));
+    char ** parsed_args = calloc(TOKEN_LIMIT, sizeof(char **));
     char * p = line;
     int index = 0;
     while(p != NULL) {
@@ -115,56 +111,98 @@ char ** parse_redirect(char ** parsed_args) {
 	return parsed_args;
 }
 
-//parses the arguments for |
-//returns all arguments after the pipe
+//parses the arguments for "|""
 //changes the file descriptors accordingly
-char ** parse_pipe(char ** parsed_args) {
-	int index = 0;
-	int pipe_place = -1;
-	while(parsed_args[index]) {
+//executes the programs accordingly
+//returns -1 if no "|" is found
+int parse_pipe(char ** parsed_args) {
 
-		if (strcmp(parsed_args[index], "|") == 0) {
-			pipe_place = index;
-			printf("%i\n", pipe_place);
-			unsigned int fds[1];
-			pipe(fds);
+	//search through parsed args for "|"
+	int i = 0;
+	while(parsed_args[i]) {
+
+		//if the "|" is found
+		if (!strcmp(parsed_args[i], "|")) {
 			
+			//create a pipe
+			int fds[2];
+			if(pipe(fds) == -1) {
+				printf("HAR.SH: %s\n", strerror(errno));
+				exit(0);
+			}
+			int r = fds[0];
+			int w = fds[1];
 
-			if (!fork()) {
-				printf("1st prog...\n");
+			//shorten it to just the first program
+			char ** prog1 = malloc(sizeof(char**)*TOKEN_LIMIT);
+			int x = 0;
+			while(strcmp(parsed_args[x],"|")) {
+				prog1[x] = parsed_args[x];
+				x++;
+			}
 
-				int i = 5;
-				while(i >= pipe_place) {
-					printf("removing %s\n", parsed_args[i]);
-					parsed_args[i] == NULL;
-					i--;				
-				}
-
-				dup2(fds[1],1);
+			if(!fork()) { //CHILD
 				wait_for_me = getpid();
 
-				if (execvp(parsed_args[0], parsed_args) == -1) {
+				//swap stdout with the write end of the pipe
+				dup2(w,STDOUT_FILENO);
+
+				//exec the first program into the write end of the pipe
+				if(execvp(prog1[0], prog1) == -1) {
 					printf("HAR.SH: %s\n", strerror(errno));
 					exit(0);
 				}
-			} else {
+			} else { //PARENT
+
+				//wait for the child to finish
+				free(prog1);
 				int status;
 				waitpid(wait_for_me, &status, 0);
 			}
-			dup2(fds[0],0);
-		}
 
-		index++;
-	}
+			//to hold second program
+			char ** prog2 = malloc(sizeof(char **)*TOKEN_LIMIT);
 
-	char ** p = parsed_args;
-	if (pipe_place > -1) {
-		while(pipe_place--) {
-			printf("moving forward\n");
-			p++;
+			//skip the pipe "|"
+			x++;
+
+			//isolate the second program in prog2
+			int i = 0;
+			while (parsed_args[x]) {
+				prog2[i] = parsed_args[x];
+				x++;
+				i++;
+			}
+
+
+			if(!fork()) { //CHILD 2
+				wait_for_me = getpid();
+
+				close(w);
+
+				//swap stdin with the read end of the pipe
+				dup2(r,STDIN_FILENO);
+
+				//exec the second program
+				if(execvp(prog2[0], prog2) == -1) {
+					printf("HAR.SH: %s\n", strerror(errno));
+					exit(0);
+				}
+			} else { //PARENT
+
+				//wait for the child to finish
+				close(r);
+				close(w);
+				free(prog2);
+				int status;
+				waitpid(wait_for_me, &status, 0);
+				return 0;
+			}
 		}
+		i++;
 	}
-	return p++;
+	//if we didn't find a pipe, continue as normal
+	return -1;
 }
 
 
@@ -177,7 +215,8 @@ int shell (char * input) {
 	newline_remover(input);
 	
 	//sets p to an array of tokens from the input
-	char ** p = parse_args(input);
+	char ** p = malloc(sizeof(char **) * TOKEN_LIMIT);
+	p = parse_args(input);
 
 	//when "exit" is typed, end this process
  	if(strcmp(p[0], "exit") == 0) {exit(0);}
@@ -194,13 +233,15 @@ int shell (char * input) {
     		return 0;
     }
 
+    //for pipeage
+	if (parse_pipe(p) > -1) {
+		return 0;
+	}
+
  	if (!fork()) {
 
  		//for redirection
 		p = parse_redirect(p);
-
-		//for pipeage
-		//p = parse_pipe(p);
 
  		wait_for_me = getpid();
 
@@ -217,7 +258,7 @@ int shell (char * input) {
 
 //Begins the shell and awaits instruction from user
 //to put into the shell command
-//returns 0 - always
+//returns 0 when run correctly
 int main() {
 
 	//intro to the shell
@@ -257,6 +298,7 @@ int main() {
 	}
 
 	free(path);
+	free(user);
 
 	return 0;		
 }
