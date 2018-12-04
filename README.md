@@ -1,23 +1,27 @@
 # MKS65C-shell
 For Mr.K's SLP Class
 
-Features that Work:
+Features:
 -
-- Exit
-- Commands
-- Semicolon separation
+- exit
+- commands
+- semicolon(;) separation
 - cd
 - garf
-- Redirection
+- simple redirection (<,>)
+- pipe (only one pipe)
 
-Features that I plan to implement:
+Unsuccessful Implementations:
 -
-- Piping (very close)
+- "complex" redirection (<<,2<...)
+- multiple piping
 
 Bugs:
 -
-- spacing issues (commands with too may spaces inbetween tokens)
-- piping doesn't work at the moment (will not take | as a valid token)
+- spacing issues
+   - extra spaces inbetween tokens will fail
+   - extra spaces at the end of the command will fail
+- wc sometimes only displays the line count (when piping)
 
 Function Headers:
 -
@@ -33,9 +37,8 @@ char * strip_spaces(char * string);
 //tokens separated by " " from the original string
 char ** parse_args(char * line);
 
-//Takes the input as lines of commands (that have 
-//already been parsed by ';') and runs said commands
-//returns 0 - always
+//Takes in a string and removes the newline character (\n) from
+//the end of the string if it is there
 void newline_remover(char * line);
 
 //takes an input for the desired path
@@ -48,18 +51,19 @@ void cd(char * path);
 //changes the file descriptors accordingly
 char ** parse_redirect(char ** parsed_args);
 
-//parses the arguments for |
-//returns all arguments after the pipe
+//parses the arguments for "|"
 //changes the file descriptors accordingly
-char ** parse_pipe(char ** parsed_args);
+//executes the programs accordingly
+//returns -1 if no "|" is found
+int parse_pipe(char ** parsed_args);
+
+//Takes the input as lines of commands (that have 
+//already been parsed by ';') and runs said commands
+//returns 0 - always
+int shell (char * input);
 
 //Begins the shell and awaits instruction from user
 //to put into the shell command
-//returns 0 - always
-int shell(char * input);
-
-//Begins the shell and awaits instruction from user
-//to put into the shell command
-//returns 0 - always
+//returns 0 when run correctly
 int main();
 ```
