@@ -275,7 +275,9 @@ int main() {
 		//keeps track of the current directory and user name
 		getcwd(path, sizeof(char) * PATH_SIZE);
 		getlogin_r(user, sizeof(char) * USER_SIZE);
-		printf("HAR.SH:%s:%s>>", user, path);
+		if (isatty(0)) {
+			printf("HAR.SH:%s:%s>>", user, path);
+		}
 
 		//create a buffer for the incoming set of commands
 		char * buff = malloc(sizeof(char) * BUFF_SIZE);
